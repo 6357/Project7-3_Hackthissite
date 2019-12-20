@@ -248,6 +248,79 @@ open(STARTREKLOG, '>>/var/log/startrek');
 第一次接觸 perl ，也算蠻幸運有觀察到有用訊息，一開始題目就回答正確，也學習到 perl open()這個函式含有許多不同的模式，不僅上述說的幾點，還有像是前方加上加號的 `+>` 模式等等，學習到不少東西。
 
 ## 1051406 徐崑華
+### Extbasic 7. Bugs? In my PHP? It's more likely than you think
+>Fix this script.
+There is only one line that has a vuln, correct it. The output does not have to be valid XHTML and assume that a mysql connection has been made already.
+There is a bug as well as a vuln. You MUST fix both.
+
+Here is the script:
+```
+<?php
+        if (!empty($_POST['data']))
+        {
+                $data = mysql_real_escape_string($_POST['data']);
+                mysql_query("INSERT INTO tbl_data (data) VALUES ('$data')");
+        }
+?>
+<form name="grezvahfvfnjuvavatovgpu" action="<?=$_SERVER['PHP_SELF']?>" method="get">
+        <input type="text" name="data" />
+        <input type="submit" />
+</form>
+```
+
+>某人寫了支PHP的程式，但有錯誤，需要你幫忙去修正，錯誤一共有兩個
+
+#### 思路<一>
+1. 首先第一眼就能夠看到最明顯的資料的傳遞方式，一個是用get傳送，一個是用post接收
+2. 所以只要把這兩個資料傳遞的方式改成一樣的就行了
+3. 所以把<form name="grezvahfvfnjuvavatovgpu" action="<?=$_SERVER['PHP_SELF']?>" method="`get`">改成
+4. <form name="grezvahfvfnjuvavatovgpu" action="<?=$_SERVER['PHP_SELF']?>" method="`post`">
+
+#### 思路<二>
+之後第二個錯誤怎麼找都找不到，所以上網找了別人的答案(http://sp4hack.blogspot.com/2012/09/hack-this-site-extbasic-7.html)
+1. 從`mysql_real_escape_string($_POST['data'])`這個語法可以發現，其實他是想要做預防SQL injection的動作
+2. 但其實也需要預防網頁方面的injection，那就是XSS攻擊
+3. 所以PHP裡可以預防XSS攻擊的語法`htmlspecialchars()`需要加上去
+4. 所以<form name="grezvahfvfnjuvavatovgpu" action="<?=`$_SERVER['PHP_SELF']`?>" method="post">
+5. 需要改成<form name="grezvahfvfnjuvavatovgpu" action="<?=`htmlspecialchars($_SERVER['PHP_SELF'])`?>" method="post">
+
+#### 答案 
+```
+<form name="grezvahfvfnjuvavatovgpu" action="<?=htmlspecialchars($_SERVER['PHP_SELF'])?>" method="post">
+```
+
+#### 延伸
+在網頁的預防injection方面，首先需要知道
+SQL injection的預防語法，也就是上面所使用的`mysql_real_escape_string()`
+主要能夠過濾的字元有\x00  \n  \r  \  '  "  \x1a 這些
+而之後所使用得，能夠預防XSS攻擊的htmlspecialchars()主要是過濾
+& （和号）成为 &
+" （双引号）成为 "
+' （单引号）成为 '
+< （小于）成为 <
+> （大于）成为 >
+所以這個延伸主要就是想要介紹XSS攻擊
+目前 XSS 攻擊的種類大致可以分成以下幾種類型：
+Stored XSS (儲存型)
+Reflected XSS (反射型)
+DOM-Based XSS (基於 DOM 的類型)
+
+1. Stored XSS (儲存型)
+會被保存在伺服器資料庫中的 JavaScript 代碼引起的攻擊即為 Stored XSS，最常見的就是論壇文章、留言板等等
+，因為使用者可以輸入任意內容，若沒有確實檢查，那使用者輸入如 <script> 等關鍵字就會被當成
+正常的 HTML 執行，標籤的內容也會被正常的作為 JavaScript 代碼執行。
+	
+2. Reflected XSS (反射型)
+Reflected 是指不會被儲存在資料庫中，而是由網頁後端直接嵌入由前端使用者所傳送
+過來的內容造成的，最常見的就是以 GET 方法傳送資料給伺服器時，伺服器未檢查就
+將內容回應到網頁上所產生的漏洞。
+
+3. DOM-Based XSS
+了解此種 XSS 類型時，務必事先了解 DOM 是什麼，DOM 全稱為 Document Object Model，用以描述 HTML 文件的表示法，它讓我們可以使用 JavaScript 動態產生完整的網頁，而不必透過伺服器。
+因此 DOM-Based XSS 就是指網頁上的 JavaScript 在執行過程中，沒有詳細檢查資料使得操作 DOM 的過程代入了惡意指令。
+
+#### 總結
+這次的hackthissite題目雖然不難，但他卻有我所不知道的東西，就像XSS攻擊，之前所學的大部分都是SQL injection，而且最近有在寫網頁，所以網頁方面的安全也是我所需要的，而且XSS攻擊的應用也很廣，感覺也很實用．
 
 ## 1060346 唐瑨
 ### Extbasic 8 Perl is a bitch sometimes
